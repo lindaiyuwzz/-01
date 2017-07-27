@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>title</title>
+    <style>
+        canvas {
+            border: 1px solid red
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="800" height="600" style="display:block;margin:0 auto"></canvas>
+</body>
+
+</html>
+<script>
+    var canvas = document.querySelector("canvas");
+    var ctx = canvas.getContext("2d");
+    var clock = (function () {
+        function Zero(opt) {
+            if (!opt) throw "请认真填写参数";
+            for (var key in opt) {
+                this[key] = opt[key];
+            };
+            ctx.font = "20px 微软雅黑";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            this.init();
+        };
+        Zero.prototype = {
+            constructor: Zero,
+            init: function () {
+                var _this = this;
+                var timer = setInterval(function () {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.beginPath();
+                    _this.bigCircle();
+                    _this.drawLine();
+                    _this.drawPoints();
+                }, 1000)
+
+
+            },
+            // 绘制大圆
+            bigCircle: function () {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.bigX, this.bigY, this.bigRadius, 0, 2 * Math.PI);
+                ctx.lineWidth = this.bigWidth;
+                ctx.strokeStyle = "skyblue";
+                ctx.stroke();
+                ctx.restore();
+
+            },
+            // 绘制刻度线
+            drawLine: function () {
+                var ract = 2 * Math.PI / 60; //相邻弧度线之间的弧度差
+                var start = -Math.PI / 3; //初始值
+                for (var i = 0; i < 60; i++) {
+                    ctx.save();
+                    var radain = start + ract * i;
+                    if (i % 5 == 0) {
+                        var length = this.bigLength;
+                        var width = this.bigWidth;
+                        this.drawText(i / 5 + 1, radain);
+                    } else {
+                        var length = this.smallLength;
+                        var width = this.smallWidth;
+                    }
+                    // 弧度线起点
+                    var h1 = (this.bigRadius - this.bigWidth / 2) * Math.sin(radain);
+                    var b1 = (this.bigRadius - this.bigWidth / 2) * Math.cos(radain);
+                    // 弧度线终点
+                    var h2 = (this.bigRadius - this.bigWidth / 2 - length) * Math.sin(radain);
+                    var b2 = (this.bigRadius - this.bigWidth / 2 - length) * Math.cos(radain);
+
+                    var x1 = this.bigX + b1;
+                    var y1 = this.bigY + h1;
+                    var x2 = this.bigX + b2;
+                    var y2 = this.bigY + h2;
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = "black";
+                    ctx.lineWidth = width;
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+
+                }
+
+            },
+            // 绘制文字
+            drawText: function (text, radain) {
+                ctx.beginPath();
+                var length = this.bigRadius - this.bigLength - 20;
+                var h = length * Math.sin(radain);
+                var b = length * Math.cos(radain);
+                var x = this.bigX + b;
+                var y = this.bigY + h;
+                ctx.fillText(text, x, y);
+            },
+            // 绘制指针
+            drawPoints: function () {
+                ctx.restore();
+                ctx.beginPath();
+                ctx.save();
+                var data = new Date();
+                ctx.font = "20px 微软雅黑";
+                ctx.strokeText(data.toLocaleString(), 300, 50);
+                ctx.stroke();
+                // 绘制时针
+                var hour = data.getHours();
+                var min = data.getMinutes();
+                var sec = data.getSeconds();
+
+                var hoursRadian = (hour+min/60) * Math.PI / 6 % 12-Math.PI/2;
+                var minutesRadian = (min +sec/60)*2* Math.PI / 60-Math.PI/2;
+                var secondsRadian = sec *2* Math.PI / 60-Math.PI/2;
+                this.drawOnePoint(30, hoursRadian, 4);
+                this.drawOnePoint(50, minutesRadian, 3);
+                this.drawOnePoint(70, secondsRadian, 2);
+
+            },
+            drawOnePoint: function (length, radian, lineWidth) {
+                ctx.restore();
+                var h = length * Math.sin(radian);
+                var b = length * Math.cos(radian);
+                var x = this.bigX + b;
+                var y = this.bigY + h;
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(this.bigX, this.bigY);
+                ctx.lineTo(x, y);
+                ctx.lineWidth = lineWidth;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+        return function (opt) {
+            return new Zero(opt);
+        }
+    })();
+
+    clock({
+        bigX: 300,
+        bigY: 300,
+        bigRadius: 150,
+        smallLength: 12,
+        smallWidth: 1,
+        bigLength: 20,
+        bigWidth: 8,
+        hLength: 15,
+        mLength: 20,
+        sLength: 30,
+    })
+</script>
